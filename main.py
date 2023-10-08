@@ -1,13 +1,12 @@
 from tkinter import *
 from pandas import *
-from time import sleep
 import random
 
 BACKGROUND_COLOR = "#B1DDC6"
 flag = "you_can_YES_change"
 
 
-def change_random_french_word():
+def change_random_french_word(green_button_pressed):
     global flag
     if flag == "you_can_YES_change":
         random_number = random.randint(0, len(words_data_list)-1)
@@ -16,18 +15,45 @@ def change_random_french_word():
         card_canvas.itemconfig(card_title, text="French", fill="black", font=('Ariel 15 italic'))
         card_canvas.itemconfig(card_word, text=random_french_word, fill="black")
         flag = "you_can_NOT_change"
-        main_window.after(3000, change_card, random_number)
+        main_window.after(3000, change_card, random_number, random_french_word, green_button_pressed)
     else:
         pass
 
 
-def change_card(random_number):
+def change_card(random_number, random_french_word, green_button_pressed):
     global flag
     card_canvas.itemconfig(canvas_image, image=card_back_image)
     card_canvas.itemconfig(card_title, text="English", fill="white")
     english_words_translation = list(words_data_list[random_number].values())[0]
     card_canvas.itemconfig(card_word, text=english_words_translation, fill="white")
     flag = "you_can_YES_change"
+    print(green_button_pressed)
+    if green_button_pressed is True:
+        print(f"{random_french_word},{english_words_translation}")
+        with open("./data/french_words.csv", 'r') as french_words:
+            initial_lines = french_words.readlines()
+
+        with open("./data/french_words.csv", 'w') as french_words_updated:
+            for lines in initial_lines:
+                if lines.strip("\n") != f"{random_french_word},{english_words_translation}":
+                    french_words_updated.write(lines)
+
+        with open('./data/known_words.csv', 'a') as known_word:
+            known_word.write(f"{random_french_word},{english_words_translation}\n")
+        words_data_list.pop(random_number)
+        green_button_pressed = False
+
+
+def green_pressed():
+    global green_button_pressed
+    green_button_pressed = True
+    change_random_french_word(green_button_pressed)
+
+
+def red_pressed():
+    global green_button_pressed
+    green_button_pressed = False
+    change_random_french_word(green_button_pressed)
 
 
 words_data_df = read_csv("./data/french_words.csv")
@@ -60,12 +86,12 @@ card_canvas.grid(row=0, column=0, columnspan=2)
 
 # Buttons
 
-wrong_button = Button(image=wrong_image, highlightthickness=0, bd=0, command=change_random_french_word)
+wrong_button = Button(image=wrong_image, highlightthickness=0, bd=0, command=red_pressed)
 wrong_button.grid(row=1, column=0)
 
-right_button = Button(image=right_image, highlightthickness=0, bd=0, command=change_random_french_word)
+right_button = Button(image=right_image, highlightthickness=0, bd=0, command=green_pressed)
 right_button.grid(row=1, column=1)
 
-main_window.after(0, change_random_french_word)
+main_window.after(0, change_random_french_word, False)
 
 main_window.mainloop()
