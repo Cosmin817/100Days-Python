@@ -1,40 +1,61 @@
 import requests
 from itertools import islice
-
+from twilio.rest import Client
 
 def deviation_percentage_calc(yesterday_closing_price: float, before_yesterday_closing_price: float) -> dict:
     global direction
     difference: float = yesterday_closing_price - before_yesterday_closing_price
     percentage: float = (difference / before_yesterday_closing_price) * 100
     if percentage < 0:
-        f_direction = "decreased"
+        f_direction = "🔻"
     elif percentage > 0:
-        f_direction = "increased"
+        f_direction = "🟢"
     else:
-        f_direction = "stable"
+        f_direction = "⏸"
     output = {'percentage_deviation': abs(percentage), 'stock_direction': f_direction}
     return output
 
 
-def get_news():
+def get_news() -> dict:
     #FULL URL: https://newsapi.org/v2/top-headlines?q=TESLA&pageSize=3&apiKey=9b3163e9f1074d3eb3b7cfa6a5d67522
     get_news_parameters = {
         'q': COMPANY_NAME,
         'pageSize': 3,
-        'apikey': NEWS_API_KEY
+        'apikey': NEWS_API_KEY,
+        'sortBy': "publishedAt",
+        'language': "en"
     }
-    news_request = requests.get(url="https://newsapi.org/v2/top-headlines", params=get_news_parameters)
+    news_request = requests.get(url="https://newsapi.org/v2/everything", params=get_news_parameters)
     news_json = news_request.json()
-    print(news_json)
-    return 0
+    print(news_request.url)
+    title_dict = {}
+    for article in news_json['articles']:
+        title_dict[article['title']] = article['description']
+    return title_dict
 
 
+def send_sms(stock_symbol: str, stock_data: dict, stock_direction: str):
+    account_sid = 'ACb3ecdfb36ca582b3888fb1a11c62af5f'
+    auth_token = '6274fd2ca9387f41703d443bfa41d6f0'
+
+    for heading, description in stock_data.items():
+        print(heading)
+        print(description)
+        client = Client(account_sid, auth_token)
+        message = client.messages.create(
+            from_='+15673722701',
+            to='+40749153818',
+            body=f'{stock_symbol} {stock_direction} {DEVIATION}%\nHeadline: {heading}\nBrief: {description}',
+        )
+
+        print(message.sid)
 
 direction = 'NONE'
 STOCK = "TSLA"
-COMPANY_NAME = "Tesla"
+COMPANY_NAME = "Tesla Inc"
 API_KEY = "YO3FBR7BQF1KAMDA"
 NEWS_API_KEY = "9b3163e9f1074d3eb3b7cfa6a5d67522"
+DEVIATION = 3
 ## STEP 1: Use https://www.alphavantage.co (API_KEY=YO3FBR7BQF1KAMDA)
 # When STOCK price increase/decreases by 5% between yesterday and the day before yesterday then print("Get News").
 # https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol=IBM&outputsize=compact&apikey=YO3FBR7BQF1KAMDA
@@ -64,11 +85,12 @@ for key, value in stock_price_json['Time Series (Daily)'].items():
 deviation_percentage = deviation_percentage_calc(two_days_closing_price[0], two_days_closing_price[1])
 deviation_percentage_result = deviation_percentage
 
-if deviation_percentage_result['percentage_deviation'] >= 3:
-    get_news()
-
 ## STEP 2: Use https://newsapi.org (API_KEY=9b3163e9f1074d3eb3b7cfa6a5d67522)
-# Instead of printing ("Get News"), actually get the first 3 news pieces for the COMPANY_NAME. 
+# Instead of printing ("Get News"), actually get the first 3 news pieces for the COMPANY_NAME.
+
+if deviation_percentage_result['percentage_deviation'] >= DEVIATION:
+    important_headlines = get_news()
+    send_sms(STOCK, important_headlines, deviation_percentage_result['stock_direction'])
 
 ## STEP 3: Use https://www.twilio.com
 # Send a seperate message with the percentage change and each article's title and description to your phone number. 
