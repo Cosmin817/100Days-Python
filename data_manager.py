@@ -28,3 +28,4 @@ class DataManager:
         }
         response = requests.put(url, json=body)
         print(response.json())
+        return 0
