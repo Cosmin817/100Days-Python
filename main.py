@@ -4,6 +4,8 @@ from data_manager import DataManager
 from pprint import pprint
 from flight_data import FlightData
 
+FLY_FROM_CITY='BUH'
+
 sheet_data_manager = DataManager()
 sheet_data = sheet_data_manager.get_sheet_data()
 
@@ -18,4 +20,4 @@ for city in sheet_data:
         rowid = city['id']
         sheet_data_manager.set_city_iata_code(rowid, city_iata_code)
 
-print(sheet_data)
+
