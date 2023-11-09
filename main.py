@@ -4,7 +4,7 @@ from data_manager import DataManager
 from pprint import pprint
 from flight_data import FlightData
 
-FLY_FROM_CITY='BUH'
+FLY_FROM_CITY = 'BUH'
 
 sheet_data_manager = DataManager()
 sheet_data = sheet_data_manager.get_sheet_data()
@@ -20,4 +20,17 @@ for city in sheet_data:
         rowid = city['id']
         sheet_data_manager.set_city_iata_code(rowid, city_iata_code)
 
+for city in sheet_data:
+    city_iata_code = city['iataCode']
+    city_requested_price = city['lowestPrice']
+    get_lowest_price = flight_data_manager.get_flight(FLY_FROM_CITY, city_iata_code)
+    if get_lowest_price == "None":
+        pass
+    elif get_lowest_price['lowest_price_flight'] <= city_requested_price:
+        # print(f"{get_lowest_price['city_to']} €{get_lowest_price['lowest_price_flight']}")
+        message_body = (f"Low price alert! Only €{get_lowest_price['lowest_price_flight']} to fly from "
+                        f"{get_lowest_price['city_from']}-{get_lowest_price['airpot_iata_code_from']} "
+                        f"to {get_lowest_price['city_to']}-{get_lowest_price['airpot_iata_code_to']}, "
+                        f"from {get_lowest_price['outbound_date']} to {get_lowest_price['inbound_date']}")
 
+        print(message_body)

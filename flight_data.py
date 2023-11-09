@@ -3,6 +3,7 @@
     #API_KEY=r49LGTYaqj2zLXDI2Jctu4KVCumc95S
     #AffilID=cosmincmcflightsearch
 import requests
+from datetime import datetime, timedelta
 
 # curl -X 'GET' \
 #   'https://api.tequila.kiwi.com/locations/query?term=Paris&locale=en-US&location_types=city&limit=1&active_only=true' \
@@ -11,6 +12,9 @@ import requests
 
 TEQUILA_ENDPOINT = "https://api.tequila.kiwi.com"
 TEQUILA_API_KEY = "_r49LGTYaqj2zLXDI2Jctu4KVCumc95S"
+FUTURE_DATE_AFTER_1DAY = (datetime.now() + timedelta(days=1)).strftime('%d/%m/%Y')
+FUTURE_DATE_AFTER_6MONTHS = (datetime.now() + timedelta(days=180)).strftime('%d/%m/%Y')
+
 
 class FlightData:
     def __init__(self):
@@ -34,11 +38,12 @@ class FlightData:
         return output
 
     def get_flight(self, city_from, city_destination):
+        output = {}
         params = {
             'fly_from': city_from,
             'fly_to': city_destination,
-            'date_from': '08/11/2023',
-            'date_to': '06/05/2024',
+            'date_from': FUTURE_DATE_AFTER_1DAY,
+            'date_to': FUTURE_DATE_AFTER_6MONTHS,
             # 'return_from': '04/04/2021',
             # 'return_to': '06/04/2021',
             'nights_in_dst_from': '7',
@@ -62,13 +67,18 @@ class FlightData:
             'max_stopovers': '0',
             'max_sector_stopovers': '0',
             'vehicle_type': 'aircraft',
-            'limit': '500',
-            'sort': 'price'
+            'limit': '1',
+            'sort': 'price' # sort after the price, the smallest price is at index 0
         }
         response = requests.get(url=f"{TEQUILA_ENDPOINT}/v2/search", headers=self.header, params=params)
-        print(response.json()['data'][0]['price']) # price to destination
-        print(len(response.json()['data']))
-        pass
-
-test_object = FlightData()
-test_object.get_flight('BUH','BER')
+        try:
+            output['lowest_price_flight'] = float(response.json()['data'][0]['price']) # price to destination
+            output['city_from'] = str(response.json()['data'][0]['cityFrom'])
+            output['airpot_iata_code_from'] = str(response.json()['data'][0]['flyFrom'])
+            output['city_to'] = str(response.json()['data'][0]['cityTo'])
+            output['airpot_iata_code_to'] = str(response.json()['data'][0]['flyTo'])
+            output['outbound_date'] = str(response.json()['data'][0]['local_departure']).split("T")[0]
+            output['inbound_date'] =str(response.json()['data'][0]['local_arrival']).split("T")[0]
+            return output
+        except IndexError:
+            return "None"
