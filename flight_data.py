@@ -55,7 +55,7 @@ class FlightData:
             'one_per_date': '0',
             'adults': '1',
             # 'children': '2',
-            # 'selected_cabins': 'C',
+            # 'selected_cabins': 'M',
             # 'mix_with_cabins': 'M',
             'adult_hold_bag': '1',
             'adult_hand_bag': '1',
@@ -67,7 +67,7 @@ class FlightData:
             'max_stopovers': '0',
             'max_sector_stopovers': '0',
             'vehicle_type': 'aircraft',
-            'limit': '1',
+            'limit': '200',
             'sort': 'price' # sort after the price, the smallest price is at index 0
         }
         response = requests.get(url=f"{TEQUILA_ENDPOINT}/v2/search", headers=self.header, params=params)
@@ -78,7 +78,7 @@ class FlightData:
             output['city_to'] = str(response.json()['data'][0]['cityTo'])
             output['airpot_iata_code_to'] = str(response.json()['data'][0]['flyTo'])
             output['outbound_date'] = str(response.json()['data'][0]['local_departure']).split("T")[0]
-            output['inbound_date'] =str(response.json()['data'][0]['local_arrival']).split("T")[0]
+            output['inbound_date'] = str(response.json()['data'][0]['route'][1]['local_departure']).split("T")[0]
             return output
         except IndexError:
             return "None"
