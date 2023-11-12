@@ -29,3 +29,11 @@ class DataManager:
         response = requests.put(url, json=body)
         print(response.json())
         return 0
+
+    def get_email_list(self):
+        url = 'https://api.sheety.co/6bd7cb43b31c572c80b4d9378a3f3767/flightDealsCch/users'
+        response_get_gsheet = requests.get(url)
+        data = response_get_gsheet.json()
+
+        emails_list = [email['email'] for email in data['users']]
+        return emails_list

@@ -13,7 +13,7 @@ sheet_data = sheet_data_manager.get_sheet_data()
 flight_data_manager = FlightData()
 notification_manager = NotificationManager()
 
-print(sheet_data)
+email_list = sheet_data_manager.get_email_list()
 
 for city in sheet_data:
     if len(city['iataCode']) == 0:
@@ -26,15 +26,25 @@ for city in sheet_data:
     city_iata_code = city['iataCode']
     city_requested_price = city['lowestPrice']
     get_lowest_price = flight_data_manager.get_flight(FLY_FROM_CITY, city_iata_code)
+
     if get_lowest_price == "None":
         pass
-    elif get_lowest_price['lowest_price_flight'] <= city_requested_price:
-        # print(f"{get_lowest_price['city_to']} €{get_lowest_price['lowest_price_flight']}")
-        message_body = (f"Low price alert! Only €{get_lowest_price['lowest_price_flight']} to fly from "
+    elif get_lowest_price['lowest_price_flight'] <= city_requested_price and get_lowest_price['stop_over'] > 0:
+        message_body = (f"Low price alert! Only {get_lowest_price['lowest_price_flight']} Euro to fly from "
                         f"{get_lowest_price['city_from']}-{get_lowest_price['airpot_iata_code_from']} "
                         f"to {get_lowest_price['city_to']}-{get_lowest_price['airpot_iata_code_to']}, "
-                        f"from {get_lowest_price['outbound_date']} to {get_lowest_price['inbound_date']}")
+                        f"from {get_lowest_price['outbound_date']} to {get_lowest_price['inbound_date']}."
+                        f"\nThis flight has {get_lowest_price['stop_over']} stop over, via {get_lowest_price['via_city']}.")
+        notification_manager.send_sms(message_body)
+        notification_manager.send_email(message_body, email_list)
+        print(message_body)
+    elif get_lowest_price['lowest_price_flight'] <= city_requested_price:
+        # print(f"{get_lowest_price['city_to']} €{get_lowest_price['lowest_price_flight']}")
+        message_body = (f"Low price alert! Only {get_lowest_price['lowest_price_flight']} Euro to fly from "
+                        f"{get_lowest_price['city_from']}-{get_lowest_price['airpot_iata_code_from']} "
+                        f"to {get_lowest_price['city_to']}-{get_lowest_price['airpot_iata_code_to']}, "
+                        f"from {get_lowest_price['outbound_date']} to {get_lowest_price['inbound_date']}.")
 
         notification_manager.send_sms(message_body)
-
+        notification_manager.send_email(message_body, email_list)
         print(message_body)

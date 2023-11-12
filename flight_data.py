@@ -1,5 +1,7 @@
 # This FlightData class is responsible for structuring the flight data.
-#https://tequila.kiwi.com/
+# https://tequila.kiwi.com/
+# lehaj82825@rdluxe.com
+# mamaligam3A
     #API_KEY=r49LGTYaqj2zLXDI2Jctu4KVCumc95S
     #AffilID=cosmincmcflightsearch
 import requests
@@ -57,8 +59,8 @@ class FlightData:
             # 'children': '2',
             # 'selected_cabins': 'M',
             # 'mix_with_cabins': 'M',
-            'adult_hold_bag': '1',
-            'adult_hand_bag': '1',
+            # 'adult_hold_bag': '1',
+            # 'adult_hand_bag': '1',
             # 'child_hold_bag': '2,1',
             # 'child_hand_bag': '1,1',
             'only_working_days': 'false',
@@ -67,7 +69,7 @@ class FlightData:
             'max_stopovers': '0',
             'max_sector_stopovers': '0',
             'vehicle_type': 'aircraft',
-            'limit': '200',
+            'limit': '1',
             'sort': 'price' # sort after the price, the smallest price is at index 0
         }
         response = requests.get(url=f"{TEQUILA_ENDPOINT}/v2/search", headers=self.header, params=params)
@@ -81,4 +83,20 @@ class FlightData:
             output['inbound_date'] = str(response.json()['data'][0]['route'][1]['local_departure']).split("T")[0]
             return output
         except IndexError:
-            return "None"
+            params['max_stopovers'] = 2
+            params['max_sector_stopovers'] = 2
+            response = requests.get(url=f"{TEQUILA_ENDPOINT}/v2/search", headers=self.header, params=params)
+            # print(response.json())
+            try:
+                output['lowest_price_flight'] = float(response.json()['data'][0]['price']) # price to destination
+                output['city_from'] = str(response.json()['data'][0]['cityFrom'])
+                output['airpot_iata_code_from'] = str(response.json()['data'][0]['flyFrom'])
+                output['city_to'] = str(response.json()['data'][0]['cityTo'])
+                output['airpot_iata_code_to'] = str(response.json()['data'][0]['flyTo'])
+                output['outbound_date'] = str(response.json()['data'][0]['local_departure']).split("T")[0]
+                output['inbound_date'] = str(response.json()['data'][0]['route'][-1]['local_departure']).split("T")[0]
+                output['stop_over'] = params['max_stopovers'] - 1
+                output['via_city'] = str(response.json()['data'][0]['route'][0]['cityTo'])
+                return output
+            except IndexError:
+                return "None"
