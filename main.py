@@ -33,6 +33,10 @@ def post_page(post_id: int):
             correct_data = mydict
     return render_template('post.html', post=correct_data)
 
+@app.route("/form-entry")
+def receive_data():
+    return "<h1>receive_data is here</h1>"
+
 
 if __name__ == '__main__':
     app.run(debug=True)
